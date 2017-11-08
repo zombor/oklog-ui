@@ -21,14 +21,15 @@
               <div class="field">
                 <div class="control">
                   <div class="select">
-                    <select id="from">
-                      <option>5m</option>
-                      <option>15m</option>
-                      <option>1h</option>
-                      <option>12h</option>
-                      <option>1d</option>
-                      <option>3d</option>
-                      <option>7d</option>
+                    <select v-model="from" id="from">
+                      <option value="-5 minutes">5m</option>
+                      <option value="-15 minutes">15m</option>
+                      <option value="-1 hour">1h</option>
+                      <option value="-12 hours">12h</option>
+                      <option value="-1 day">1d</option>
+                      <option value="-3 days">3d</option>
+                      <option value="-7 days">7d</option>
+                      <option>at</option>
                     </select>
                   </div>
                 </div>
@@ -45,7 +46,7 @@
               <div class="field">
                 <div class="control">
                   <div class="select">
-                    <select id="from">
+                    <select v-model="to" id="from">
                       <option>now</option>
                       <option>at</option>
                     </select>
@@ -104,21 +105,42 @@
 import axios from 'axios';
 import jq from 'jq-web';
 
+const moment = require('moment');
+require('moment-parseplus');
+
 export default {
   name: 'app',
   data() {
     return {
       hostname: '',
       filterExpr: '',
+      from: '-5 minutes',
+      to: 'now',
       lines: [],
     };
+  },
+  computed: {
+    toTimestamp() {
+      if (this.to === 'now') {
+        return moment().format();
+      }
+
+      return this.to;
+    },
+    fromTimestamp() {
+      if (this.from === 'at') {
+        return this.from;
+      }
+
+      return moment(this.from).format();
+    },
   },
   methods: {
     getLines() {
       axios.get(`${this.hostname}/store/query`, {
         params: {
-          from: '2017-11-07T00:00:00-06:00',
-          to: '2017-11-08T00:30:00-06:00',
+          from: this.fromTimestamp,
+          to: this.toTimestamp,
         },
       }).then((res) => {
         this.lines = res.data.split('\n').map(l => l.slice(27)).map((l) => {
