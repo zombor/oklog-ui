@@ -108,7 +108,7 @@
             <tbody>
               <tr v-for="l in lines">
                 <td>{{ formatUnix(l.at) }}</td>
-                <td><pre>{{ l.data }}</pre></td>
+                <td><pre>{{ l }}</pre></td>
               </tr>
             </tbody>
           </table>
@@ -119,6 +119,7 @@
 </template>
 
 <script>
+/* eslint no-underscore-dangle: ["error", { "allow": ["_json", "_at"] }] */
 import axios from 'axios';
 import jq from 'jq-web';
 import Dexie from 'dexie';
@@ -175,30 +176,24 @@ export default {
           }
 
           try {
-            return {
-              at: decodeTime(l[0]),
-              data: JSON.parse(l[1]),
-              json: true,
-            };
+            const d = JSON.parse(l[1]);
+            d._json = true;
+            d._at = decodeTime(l[0]);
+            return d;
           } catch (e) {
             return {
-              at: decodeTime(l[0]),
+              _at: decodeTime(l[0]),
               data: l[1],
-              json: false,
+              _json: false,
             };
           }
-        }).filter(l => l !== null);
+        }).filter(l => !!l);
 
-        if (this.filterExpr !== '') {
-          this.lines = this.lines.filter(l => !!l.json);
-
-          const ats = this.lines.map(l => l.at);
-          const jsons = this.lines.map(l => l.data);
-
-          this.lines = jq(jsons, this.filterExpr).map((j, i) => ({
-            at: ats[i],
-            data: j,
-          }));
+        if (this.filterExpr !== '' && this.lines.length > 0) {
+          this.lines = jq(this.lines.filter(l => l._json), this.filterExpr);
+          if (!Array.isArray(this.lines)) {
+            this.lines = [this.lines];
+          }
         }
       });
     },
