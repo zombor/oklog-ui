@@ -98,6 +98,7 @@
           </nav>
         </div>
         <div class="column">
+          <div class="notification is-danger" v-if="error"><button @click="error = null" class="delete"></button>{{ error }}</div>
           <table class="table is-striped">
             <thead>
               <tr>
@@ -132,6 +133,7 @@ export default {
   name: 'app',
   data() {
     return {
+      error: null,
       hosts: [],
       newHostname: null,
       activeHost: null,
@@ -190,9 +192,13 @@ export default {
         }).filter(l => !!l);
 
         if (this.filterExpr !== '' && this.lines.length > 0) {
-          this.lines = jq(this.lines.filter(l => l._json), this.filterExpr);
-          if (!Array.isArray(this.lines)) {
-            this.lines = [this.lines];
+          try {
+            this.lines = jq(this.lines.filter(l => l._json), this.filterExpr);
+            if (!Array.isArray(this.lines)) {
+              this.lines = [this.lines];
+            }
+          } catch (e) {
+            this.error = 'An error occurred parsing the json. Make sure your jq filter is formatted properly!';
           }
         }
       });
@@ -205,7 +211,7 @@ export default {
         this.hosts.push(h);
         this.activeHost = h.hostname;
       }).catch((err) => {
-        console.log(err);
+        this.error = err;
       });
     },
     deleteHost(h) {
