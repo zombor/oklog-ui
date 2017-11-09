@@ -13,12 +13,14 @@
   "dependencies": {
     "axios": "^0.17.0",
     "bulma": "^0.6.1",
+    "dexie": "^2.0.1",
     "fs": "0.0.1-security",
     "jq-web": "^0.1.2",
     "moment": "^2.19.1",
     "moment-parseplus": "^1.0.3",
     "node-sass": "^4.6.0",
     "sass-loader": "^6.0.6",
+    "ulid": "^2.2.1",
     "vue": "^2.5.2"
   },
   "devDependencies": {

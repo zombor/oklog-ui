@@ -72,11 +72,22 @@
       <div class="columns">
         <div class="column is-2">
           <nav class="panel">
-            <p class="panel-heading">OK Log</p>
+            <p class="panel-heading">OK Log Hosts</p>
             <div class="panel-block">
-              <p class="control has-icons-left">
-                <input v-model="hostname" class="input is-small" type="text" placeholder="hostname">
-              </p>
+              <div class="field has-addons">
+                <p class="control is-expanded">
+                  <input v-model="newHostname" class="input is-small" type="text" placeholder="hostname">
+                </p>
+                <p class="control">
+                  <button @click="createHost" class="button is-primary is-small">Create</button>
+                </p>
+              </div>
+            </div>
+            <p class="panel-tabs">
+              <a v-for="h in hosts" @click="activeHost = h.hostname" v-bind:class="{'is-active': h.hostname === activeHost}">{{ h.hostname }}</a>
+            </p>
+            <div class="panel-block">
+              <button @click="deleteHost(activeHost)" class="button is-link is-outlined is-fullwidth is-small">delete host</button>
             </div>
             <a class="panel-block is-active">
               <span class="panel-icon">
@@ -84,17 +95,23 @@
               </span>
               bulma
             </a>
-            <div class="panel-block">
-              <button class="button is-link is-outlined is-fullwidth">
-                reset all filters
-              </button>
-            </div>
           </nav>
         </div>
         <div class="column">
-          <ul>
-            <li v-for="l in lines">{{ l }}</li>
-          </ul>
+          <table class="table is-striped">
+            <thead>
+              <tr>
+                <th>At</th>
+                <th>Data</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr v-for="l in lines">
+                <td>{{ formatUnix(l.at) }}</td>
+                <td><pre>{{ l.data }}</pre></td>
+              </tr>
+            </tbody>
+          </table>
         </div>
       </div>
     </section>
@@ -104,6 +121,8 @@
 <script>
 import axios from 'axios';
 import jq from 'jq-web';
+import Dexie from 'dexie';
+import { decodeTime } from 'ulid';
 
 const moment = require('moment');
 require('moment-parseplus');
@@ -112,11 +131,15 @@ export default {
   name: 'app',
   data() {
     return {
-      hostname: '',
+      hosts: [],
+      newHostname: null,
+      activeHost: null,
       filterExpr: '',
       from: '-5 minutes',
       to: 'now',
       lines: [],
+
+      db: null,
     };
   },
   computed: {
@@ -136,25 +159,82 @@ export default {
     },
   },
   methods: {
+    formatUnix(t) {
+      return moment(t).format();
+    },
     getLines() {
-      axios.get(`${this.hostname}/store/query`, {
+      axios.get(`${this.activeHost}/store/query`, {
         params: {
           from: this.fromTimestamp,
           to: this.toTimestamp,
         },
       }).then((res) => {
-        this.lines = res.data.split('\n').map(l => l.slice(27)).map((l) => {
-          try {
-            return JSON.parse(l);
-          } catch (e) {
+        this.lines = res.data.split('\n').map(l => [l.substr(0, l.indexOf(' ')), l.substr(l.indexOf(' ') + 1)]).map((l) => {
+          if (l[0] === '') {
             return null;
           }
+
+          try {
+            return {
+              at: decodeTime(l[0]),
+              data: JSON.parse(l[1]),
+              json: true,
+            };
+          } catch (e) {
+            return {
+              at: decodeTime(l[0]),
+              data: l[1],
+              json: false,
+            };
+          }
         }).filter(l => l !== null);
+
         if (this.filterExpr !== '') {
-          this.lines = jq(this.lines, this.filterExpr);
+          this.lines = this.lines.filter(l => !!l.json);
+
+          const ats = this.lines.map(l => l.at);
+          const jsons = this.lines.map(l => l.data);
+
+          this.lines = jq(jsons, this.filterExpr).map((j, i) => ({
+            at: ats[i],
+            data: j,
+          }));
         }
       });
     },
+    createHost() {
+      this.db.hosts.put({
+        hostname: this.newHostname,
+        filters: [],
+      }).then(key => this.db.hosts.get(key)).then((h) => {
+        this.hosts.push(h);
+        this.activeHost = h.hostname;
+      }).catch((err) => {
+        console.log(err);
+      });
+    },
+    deleteHost(h) {
+      this.db.hosts.delete(h).then(() => {
+        this.hosts.splice(
+          this.hosts.findIndex(host => host.hostname === h),
+          1,
+        );
+
+        if (this.hosts.length > 0) {
+          this.activeHost = this.hosts[0].hostname;
+        }
+      });
+    },
+  },
+  mounted() {
+    this.db = new Dexie('oklog.db');
+    this.db.version(1).stores({
+      hosts: 'hostname,filters',
+    });
+    this.db.hosts.each((h) => {
+      this.hosts.push(h);
+      this.activeHost = h.hostname;
+    });
   },
 };
 </script>

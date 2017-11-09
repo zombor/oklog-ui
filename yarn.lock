@@ -1703,6 +1703,10 @@ detect-libc@^1.0.2:
   version "1.0.2"
   resolved "https://registry.yarnpkg.com/detect-libc/-/detect-libc-1.0.2.tgz#71ad5d204bf17a6a6ca8f450c61454066ef461e1"
 
+dexie@^2.0.1:
+  version "2.0.1"
+  resolved "https://registry.yarnpkg.com/dexie/-/dexie-2.0.1.tgz#a6dc4e607461c4da5f934621917a2a8939a18e97"
+
 diffie-hellman@^5.0.0:
   version "5.0.2"
   resolved "https://registry.yarnpkg.com/diffie-hellman/-/diffie-hellman-5.0.2.tgz#b5835739270cfe26acf632099fded2a07f209e5e"
@@ -5417,6 +5421,10 @@ uglifyjs-webpack-plugin@^0.4.6:
 uid-number@^0.0.6:
   version "0.0.6"
   resolved "https://registry.yarnpkg.com/uid-number/-/uid-number-0.0.6.tgz#0ea10e8035e8eb5b8e4449f06da1c730663baa81"
+
+ulid@^2.2.1:
+  version "2.2.1"
+  resolved "https://registry.yarnpkg.com/ulid/-/ulid-2.2.1.tgz#fcd7eda844e8d336d6aa67d9dfdd6ea644ee3b18"
 
 ultron@~1.1.0:
   version "1.1.0"
