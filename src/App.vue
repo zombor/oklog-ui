@@ -71,7 +71,7 @@
     <section class="section">
       <div class="columns">
         <div class="column is-2">
-          <nav class="panel">
+          <nav class="panel" id="hosts">
             <p class="panel-heading">OK Log Hosts</p>
             <div class="panel-block">
               <div class="field has-addons">
@@ -166,6 +166,8 @@ export default {
       return moment(t).format();
     },
     getLines() {
+      this.error = null;
+
       axios.get(`${this.activeHost}/store/query`, {
         params: {
           from: this.fromTimestamp,
@@ -201,6 +203,8 @@ export default {
             this.error = 'An error occurred parsing the json. Make sure your jq filter is formatted properly!';
           }
         }
+      }).catch((err) => {
+        this.error = `An error occurred getting the data:\n${err.message}`;
       });
     },
     createHost() {
