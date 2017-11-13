@@ -18,7 +18,7 @@
               <label class="label" for="from">From</label>
             </div>
             <div class="field-body">
-              <div class="field">
+              <div class="field has-addons">
                 <div class="control">
                   <div class="select">
                     <select v-model="from" id="from">
@@ -33,6 +33,9 @@
                     </select>
                   </div>
                 </div>
+                <div v-if="from == 'at'" class="control">
+                  <input class="input" placeholder="iso8601 timestamp" v-model="at">
+                </div>
               </div>
             </div>
           </div>
@@ -43,7 +46,7 @@
               <label class="label" for="from">To</label>
             </div>
             <div class="field-body">
-              <div class="field">
+              <div class="field has-addons">
                 <div class="control">
                   <div class="select">
                     <select v-model="to" id="from">
@@ -51,6 +54,9 @@
                       <option>at</option>
                     </select>
                   </div>
+                </div>
+                <div v-if="to == 'at'" class="control">
+                  <input class="input" placeholder="iso8601 timestamp" v-model="to_at">
                 </div>
               </div>
             </div>
@@ -139,7 +145,9 @@ export default {
       activeHost: null,
       filterExpr: '',
       from: '-5 minutes',
+      at: null,
       to: 'now',
+      to_at: null,
       lines: [],
 
       db: null,
@@ -151,11 +159,11 @@ export default {
         return moment().format();
       }
 
-      return this.to;
+      return this.to_at;
     },
     fromTimestamp() {
       if (this.from === 'at') {
-        return this.from;
+        return this.at;
       }
 
       return moment(this.from).format();
