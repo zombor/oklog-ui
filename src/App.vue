@@ -70,6 +70,9 @@
             <p class="control">
               <button @click="getLines" class="button is-primary">Go</button>
             </p>
+            <p class="control" v-if="filterExpr">
+              <button @click="saveFilter" class="button is-link"><i class="fa fa-floppy-o"></i></button>
+            </p>
           </div>
         </div>
       </div>
@@ -89,23 +92,17 @@
                 </p>
               </div>
             </div>
-            <p class="panel-tabs">
-              <a v-for="h in hosts" @click="activeHost = h.hostname" v-bind:class="{'is-active': h.hostname === activeHost}">{{ h.hostname }}</a>
-            </p>
-            <div class="panel-block">
-              <button @click="deleteHost(activeHost)" class="button is-link is-outlined is-fullwidth is-small">delete host</button>
-            </div>
-            <a class="panel-block is-active">
-              <span class="panel-icon">
-                <i class="fa fa-book"></i>
-              </span>
-              bulma
-            </a>
+
+            <template v-for="h in hosts">
+              <div class="panel-block" v-bind:class="{'is-active': h.hostname === activeHost}"><a @click="activeHost = h.hostname">{{ h.hostname }}</a></div>
+              <div class="panel-block" v-for="f in h.filters">{{ f }}</div>
+            </template>
+
           </nav>
         </div>
         <div class="column">
           <div class="notification is-danger" v-if="error"><button @click="error = null" class="delete"></button>{{ error }}</div>
-          <table class="table is-striped">
+          <table v-if="lines.length > 0" class="table is-striped">
             <thead>
               <tr>
                 <th>At</th>
@@ -238,6 +235,8 @@ export default {
         }
       });
     },
+    saveFilter() {
+    },
   },
   mounted() {
     this.db = new Dexie('oklog.db');
@@ -246,7 +245,9 @@ export default {
     });
     this.db.hosts.each((h) => {
       this.hosts.push(h);
-      this.activeHost = h.hostname;
+      if (!this.activeHost) {
+        this.activeHost = h.hostname;
+      }
     });
   },
 };
@@ -257,5 +258,9 @@ export default {
 
   #filter {
     width: 40rem;
+  }
+
+  .panel-block.is-active {
+    font-weight: bold;
   }
 </style>
